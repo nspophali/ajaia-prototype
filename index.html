@@ -1,0 +1,614 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Binding Desk Prototype</title>
+<meta name="description" content="Concept prototype for Marsh & Colby's binding workflow. Ajaia assessment by Nachiket Pophali.">
+<style>
+  :root{
+    --bg:#f5f6f8; --surface:#fff; --ink:#111827; --ink2:#374151; --muted:#6b7280; --line:#e5e7eb; --fill:#f3f4f6;
+    --accent:#1e3a8a; --accent-bg:#eef2ff;
+    --amber:#b45309; --amber-bg:#fffbeb; --amber-line:#f59e0b;
+    --red:#b91c1c; --red-bg:#fef2f2; --green:#15803d; --green-bg:#f0fdf4;
+    --r:12px; --font: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+    --paper:#fbfbfa; --paper-ink:#333; --paper-fax:#f4f2ec; --paper-line:#ddd; --input:#fff; --hover:#fafafa; --strong-line:var(--strong-line); --hl:#fde68a;
+    color-scheme: light;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:not([data-theme="light"]){
+      --bg:#0f1115; --surface:#171a21; --ink:#e5e7eb; --ink2:var(--strong-line); --muted:#9ca3af; --line:#2a2f3a; --fill:#222733;
+      --accent:#8fa8ff; --accent-bg:#1e2540; --amber:#fbbf24; --amber-bg:#2a2112; --amber-line:#d97706;
+      --red:#f87171; --red-bg:#2a1414; --green:#4ade80; --green-bg:#122016;
+      --paper:#1d2129; --paper-ink:#d1d5db; --paper-fax:#24221d; --paper-line:#3a3f4b; --input:#11141a; --hover:#1c2029; --strong-line:#3f4656; --hl:#5c4a12;
+      color-scheme: dark;
+    }
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f1115; --surface:#171a21; --ink:#e5e7eb; --ink2:var(--strong-line); --muted:#9ca3af; --line:#2a2f3a; --fill:#222733;
+    --accent:#8fa8ff; --accent-bg:#1e2540; --amber:#fbbf24; --amber-bg:#2a2112; --amber-line:#d97706;
+    --red:#f87171; --red-bg:#2a1414; --green:#4ade80; --green-bg:#122016;
+    --paper:#1d2129; --paper-ink:#d1d5db; --paper-fax:#24221d; --paper-line:#3a3f4b; --input:#11141a; --hover:#1c2029; --strong-line:#3f4656; --hl:#5c4a12;
+    color-scheme: dark;
+  }
+  *{box-sizing:border-box} html,body{margin:0}
+  body{background:var(--bg);color:var(--ink);font:14px/1.5 var(--font)}
+  button,input,select,textarea{font:inherit;color:inherit}
+  button{cursor:pointer}
+  a{color:var(--accent)}
+  .hidden{display:none!important}
+
+  /* ---------- top bar ---------- */
+  .top{position:sticky;top:0;z-index:20;background:var(--surface);border-bottom:1px solid var(--line)}
+  .top-in{max-width:1240px;margin:0 auto;display:flex;align-items:center;gap:16px;padding:10px 16px;flex-wrap:wrap}
+  .logo{display:flex;align-items:center;gap:8px;font-weight:700}
+  .logo i{width:26px;height:26px;border-radius:7px;background:var(--accent);display:grid;place-items:center;color:var(--surface);font-style:normal;font-size:12px}
+  .logo small{font-weight:500;color:var(--muted)}
+  nav.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none;flex:1}
+  nav.tabs a{white-space:nowrap;text-decoration:none;color:var(--muted);padding:7px 12px;border-radius:8px;font-weight:500}
+  nav.tabs a.on{background:var(--accent-bg);color:var(--accent)}
+  nav.tabs a b{display:inline-grid;place-items:center;width:18px;height:18px;border-radius:50%;background:var(--fill);font-size:11px;margin-right:6px}
+  nav.tabs a.on b{background:var(--accent);color:var(--surface)}
+  .ev-toggle{display:flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:6px 12px;font-weight:500}
+  .ev-toggle[aria-pressed=true]{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+  .user{display:flex;align-items:center;gap:8px;color:var(--muted)}
+  .avatar{width:28px;height:28px;border-radius:50%;background:var(--accent-bg);color:var(--accent);display:grid;place-items:center;font-weight:600;font-size:12px}
+
+  main{max-width:1240px;margin:0 auto;padding:20px 16px 90px}
+  .screen{display:none} .screen.on{display:block}
+  h1{font-size:22px;line-height:1.25;margin:0} h2{font-size:15px;margin:0} h3{font-size:13px;margin:0;color:var(--muted);font-weight:600;text-transform:uppercase;letter-spacing:.05em}
+  .sub{color:var(--muted);margin:4px 0 0}
+  .head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+  .crumb{color:var(--muted);font-size:13px;margin-bottom:6px} .crumb a{text-decoration:none}
+  .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:16px}
+  .card-h{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
+  .row{display:flex;align-items:center;gap:10px;flex-wrap:wrap} .spacer{flex:1}
+  .btn{border:1px solid var(--line);background:var(--surface);border-radius:8px;padding:8px 14px;font-weight:500}
+  .btn:hover{border-color:var(--strong-line)}
+  .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--surface)}
+  .btn.dark{background:var(--ink);border-color:var(--ink);color:var(--surface)}
+  .btn.sm{padding:5px 10px;font-size:13px}
+  .btn:disabled{opacity:.4;cursor:not-allowed}
+  .chip{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:500;padding:2px 8px;border-radius:999px;background:var(--fill);color:var(--ink2);white-space:nowrap}
+  .chip.portal{background:#ecfeff;color:#0e7490} .chip.email{background:#f5f3ff;color:#6d28d9} .chip.fax{background:#fff7ed;color:#c2410c}
+  .chip.ok{background:var(--green-bg);color:var(--green)} .chip.warn{background:var(--amber-bg);color:var(--amber)} .chip.bad{background:var(--red-bg);color:var(--red)} .chip.info{background:var(--accent-bg);color:var(--accent)}
+  @media (prefers-color-scheme: dark){ :root:not([data-theme="light"]) .chip.portal{background:#0e2a30;color:#67e8f9} :root:not([data-theme="light"]) .chip.email{background:#251b3d;color:#c4b5fd} :root:not([data-theme="light"]) .chip.fax{background:#33200f;color:#fdba74} }
+  :root[data-theme="dark"] .chip.portal{background:#0e2a30;color:#67e8f9} :root[data-theme="dark"] .chip.email{background:#251b3d;color:#c4b5fd} :root[data-theme="dark"] .chip.fax{background:#33200f;color:#fdba74}
+  .dot{width:7px;height:7px;border-radius:50%;background:currentColor}
+
+  /* ---------- evidence layer ---------- */
+  [data-ev]{position:relative}
+  .ev-tag{display:none}
+  body.evidence [data-ev]{outline:2px dashed #6366f1;outline-offset:4px;border-radius:var(--r)}
+  body.evidence .ev-tag{display:block;position:absolute;z-index:6;top:-12px;right:10px;max-width:min(360px,80%);background:#312e81;color:#fff;
+    font-size:12px;line-height:1.35;padding:6px 9px;border-radius:8px;box-shadow:0 4px 14px rgba(49,46,129,.25);pointer-events:none}
+
+  /* ---------- journey ---------- */
+  .split{display:grid;grid-template-columns:1.1fr .9fr;gap:16px}
+  .timebar{display:flex;height:42px;border-radius:8px;overflow:hidden;margin:10px 0 6px;font-weight:600;font-size:13px}
+  .timebar div{display:flex;align-items:center;padding:0 12px;color:#fff}
+  .tb-find{flex:11;background:#c2410c} .tb-check{flex:3;background:#94a3b8}
+  .legend{display:flex;justify-content:space-between;color:var(--muted);font-size:12px}
+  .wait{margin-top:14px;padding:12px;border-radius:10px;background:var(--red-bg);color:var(--red);display:flex;gap:12px;align-items:center}
+  .wait strong{font-size:24px;line-height:1}
+  .stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .stat{background:var(--fill);border-radius:10px;padding:12px}
+  .stat strong{display:block;font-size:22px} .stat span{color:var(--muted);font-size:12px}
+  .journey{display:grid;grid-template-columns:repeat(9,minmax(150px,1fr));gap:8px;overflow-x:auto;padding:16px 2px 6px}
+  .jstep{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px;font-size:13px;display:flex;flex-direction:column;gap:6px}
+  .jstep .n{font-size:11px;color:var(--muted);font-weight:600}
+  .jstep b{font-size:13px}
+  .jstep .today{color:var(--muted);text-decoration:line-through;text-decoration-color:var(--strong-line)}
+  .jstep .new{color:var(--ink2)}
+  .jstep.cp{border:2px solid var(--amber-line);background:var(--amber-bg)}
+  .jstep.cp .n{color:var(--amber)}
+  .jstep .src{margin-top:auto;font:11px var(--mono);color:#6366f1}
+  .phase{display:flex;gap:8px;margin-top:6px;font-size:12px;color:var(--muted)}
+  .phase span{flex:1;border-top:3px solid;padding-top:4px}
+
+  /* ---------- workspace ---------- */
+  .ws{display:grid;grid-template-columns:300px 1fr 360px;gap:16px;align-items:start}
+  .doclist{display:flex;flex-direction:column;gap:6px}
+  .doc{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--surface);cursor:pointer;text-align:left;width:100%}
+  .doc:hover{border-color:var(--strong-line)} .doc.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+  .doc .ic{width:30px;height:36px;border-radius:5px;background:var(--fill);display:grid;place-items:center;font-size:10px;color:var(--muted);font-weight:700;flex:none}
+  .doc .meta{font-size:12px;color:var(--muted)}
+  .doc.missing{border-style:dashed;background:var(--hover);cursor:default}
+  .doc.missing .ic{background:var(--red-bg);color:var(--red)}
+  .preview{min-height:520px;display:flex;flex-direction:column}
+  .paper{flex:1;background:var(--paper);border:1px solid var(--line);border-radius:8px;padding:22px;font:13px/1.6 var(--mono);color:var(--paper-ink);position:relative}
+  .paper.faxed{background:var(--paper-fax);filter:contrast(.95)}
+  .paper h4{font:600 13px var(--font);margin:0 0 12px;color:var(--ink)}
+  .paper .ln{display:flex;justify-content:space-between;border-bottom:1px dotted var(--paper-line);padding:3px 0}
+  .hl{background:var(--hl);outline:2px solid var(--amber-line);border-radius:3px;padding:0 3px}
+  .checklist{display:flex;flex-direction:column}
+  .ci{display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:start;padding:9px 0;border-bottom:1px solid var(--line)}
+  .ci:last-child{border-bottom:0}
+  .ci .tick{width:18px;height:18px;border-radius:5px;border:1.5px solid var(--strong-line);display:grid;place-items:center;font-size:11px;color:#fff;margin-top:1px}
+  .ci.done .tick{background:var(--green);border-color:var(--green)}
+  .ci.flag .tick{background:var(--amber-line);border-color:var(--amber-line)}
+  .ci.miss .tick{background:var(--red);border-color:var(--red)}
+  .ci.wait .tick{background:#6366f1;border-color:#6366f1}
+  .ci .val{font-size:12px;color:var(--muted)}
+  .ci .val a{font-size:12px}
+  .autofill-note{font-size:12px;color:var(--muted);background:var(--fill);padding:8px 10px;border-radius:8px;margin-bottom:8px}
+
+  /* ---------- review ---------- */
+  .gate{border:2px solid var(--amber-line);background:var(--amber-bg);border-radius:var(--r);padding:14px 16px;display:flex;gap:12px;align-items:flex-start;margin-bottom:16px}
+  .gate .badge{flex:none;background:var(--amber);color:var(--surface);font-weight:700;font-size:12px;padding:4px 10px;border-radius:999px}
+  .compare{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+  .field-cmp{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--line);border-radius:10px;overflow:hidden;margin-bottom:16px}
+  .field-cmp > div{padding:12px 14px}
+  .field-cmp .lab{grid-column:1/-1;background:var(--fill);font-weight:600;font-size:13px;display:flex;justify-content:space-between;align-items:center}
+  .field-cmp .v{font-size:22px;font-weight:700}
+  .field-cmp .v.bad{color:var(--red)}
+  .field-cmp .match{grid-column:1/-1;border-top:1px solid var(--line);font-size:13px;color:var(--muted)}
+  .decide{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px}
+  .opt{border:1.5px solid var(--line);border-radius:10px;padding:12px;text-align:left;background:var(--surface)}
+  .opt:hover{border-color:#94a3b8}
+  .opt.on{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-bg)}
+  .opt b{display:block;margin-bottom:2px}
+  .opt span{font-size:12px;color:var(--muted)}
+  .panel{margin-top:14px;border:1px solid var(--line);border-radius:10px;padding:14px;background:var(--surface)}
+  textarea,select,input[type=text]{width:100%;border:1px solid var(--line);border-radius:8px;padding:9px 10px;background:var(--input)}
+  textarea{min-height:170px;font:13px/1.5 var(--font);resize:vertical}
+  label.lbl{display:block;font-weight:500;margin-bottom:6px}
+  .verify{display:flex;gap:10px;align-items:flex-start;padding:12px;border:1px dashed var(--amber-line);border-radius:10px;background:var(--amber-bg);margin-top:12px}
+  .attach{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+
+  /* ---------- follow-ups / bind ---------- */
+  .fu{display:grid;grid-template-columns:1fr 420px;gap:16px;align-items:start}
+  table{width:100%;border-collapse:collapse}
+  th,td{text-align:left;padding:11px 10px;border-bottom:1px solid var(--line);vertical-align:middle}
+  th{font-size:12px;color:var(--muted);font-weight:600}
+  tbody tr{cursor:pointer} tbody tr:hover{background:var(--hover)} tbody tr.on{background:var(--accent-bg)}
+  .days{font-weight:700}
+  .days.late{color:var(--red)} .days.mid{color:var(--amber)}
+  .bar{height:6px;border-radius:3px;background:var(--fill);overflow:hidden;width:80px}
+  .bar i{display:block;height:100%}
+  .sumlist{list-style:none;margin:0;padding:0}
+  .sumlist li{display:flex;gap:8px;padding:7px 0;border-bottom:1px solid var(--line);font-size:13px}
+  .sumlist li:last-child{border:0}
+  .ok-ic{color:var(--green);font-weight:700} .bad-ic{color:var(--red);font-weight:700}
+  .audit{font-size:12px;color:var(--muted);margin-top:10px;border-top:1px solid var(--line);padding-top:10px}
+  .audit div{padding:2px 0}
+  .bound{text-align:center;padding:26px 10px}
+  .bound .big{width:54px;height:54px;border-radius:50%;background:var(--green-bg);color:var(--green);display:grid;place-items:center;margin:0 auto 10px;font-size:26px}
+  .toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(20px);opacity:0;transition:.25s;background:var(--ink);color:var(--surface);padding:10px 16px;border-radius:10px;z-index:50;pointer-events:none}
+  .toast.on{opacity:1;transform:translateX(-50%) translateY(0)}
+  .foot{max-width:1240px;margin:0 auto;padding:0 16px 30px;color:var(--muted);font-size:12px}
+
+  @media (max-width:1100px){ .ws{grid-template-columns:1fr 1fr} .ws .preview{grid-column:1/-1;order:3} .fu{grid-template-columns:1fr} }
+  @media (max-width:760px){ .ws,.split,.compare,.decide,.stat-row{grid-template-columns:1fr} .field-cmp .v{font-size:18px} .user{display:none} .table-wrap{overflow-x:auto} }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="top-in">
+    <div class="logo"><i>M&amp;C</i>Binding Desk <small>concept v1</small></div>
+    <nav class="tabs" id="tabs">
+      <a href="#journey"><b>0</b>Journey</a>
+      <a href="#workspace"><b>1</b>Submission</a>
+      <a href="#review"><b>2</b>Mismatch review</a>
+      <a href="#followups"><b>3</b>Follow-ups &amp; bind</a>
+    </nav>
+    <button class="ev-toggle" id="evBtn" aria-pressed="false" title="Show the evidence behind each design decision (E)">◎ Show evidence</button>
+    <div class="user"><div class="avatar">AS</div>Anika Shah · Springfield</div>
+  </div>
+</header>
+
+<main>
+
+<!-- ================= 0 · JOURNEY ================= -->
+<section class="screen" id="journey">
+  <div class="head">
+    <div>
+      <h1>The checklist isn't where binding time goes</h1>
+      <p class="sub">Discovery findings → design. 2 assistants, 115 submissions, 30 days of Bindwise activity.</p>
+    </div>
+    <a class="btn primary" href="#workspace">Walk through a submission →</a>
+  </div>
+
+  <div class="split">
+    <div class="card" data-ev>
+      <span class="ev-tag">M4 · Colin: 11 min to locate documents vs 3 min to complete the checklist. Anika: median 2.1 days flag→broker reply, 9 over 4 days.</span>
+      <h3>Where the time goes (per submission)</h3>
+      <div class="timebar"><div class="tb-find">Finding documents · 11 min</div><div class="tb-check">3 min</div></div>
+      <div class="legend"><span>Hunting across portal, email, fax</span><span>Checklist</span></div>
+      <div class="wait"><strong>2.1 days</strong><div>median wait for a broker reply after a mismatch is flagged. 9 submissions took longer than 4 days.</div></div>
+    </div>
+    <div class="card" data-ev>
+      <span class="ev-tag">M4 · 23/61 + 19/54 = 42/115 mismatches · 17/54 off-portal documents</span>
+      <h3>What we found</h3>
+      <div class="stat-row" style="margin-top:10px">
+        <div class="stat"><strong>36%</strong><span>of submissions have a coverage-limit mismatch</span></div>
+        <div class="stat"><strong>31%</strong><span>have a document arriving by email or fax</span></div>
+        <div class="stat"><strong>79%</strong><span>of hands-on time is finding documents</span></div>
+      </div>
+      <p style="margin:14px 0 0;color:var(--ink2)">"The checklist itself is fine… What I actually hate is when I have to go back and forth with a broker." <span style="color:var(--muted)">— Anika (M1)</span></p>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px" data-ev>
+    <span class="ev-tag">The AI does the reading, matching and drafting. People make the two judgement calls: confirming a mismatch and binding.</span>
+    <div class="card-h"><h2>Future-state journey · one submission</h2><span class="chip warn"><span class="dot"></span>Human checkpoint</span></div>
+    <div class="journey">
+      <div class="jstep"><span class="n">1 · ARRIVES</span><b>Documents collected</b><span class="today">Scattered: portal, email, fax</span><span class="new">Pulled into one workspace, tagged by source</span><span class="src">M2 · M4 17/54</span></div>
+      <div class="jstep"><span class="n">2 · FIND</span><b>Mapped to checklist</b><span class="today">~11 min hunting</span><span class="new">Already attached. Missing items shown up front</span><span class="src">M4 11 min</span></div>
+      <div class="jstep"><span class="n">3 · CHECKLIST</span><b>Same checklist, prefilled</b><span class="today">~3 min from memory</span><span class="new">Filled from documents, same order</span><span class="src">M1 · M2 · M4</span></div>
+      <div class="jstep"><span class="n">4 · COMPARE</span><b>Cert vs application</b><span class="today">"I just read carefully"</span><span class="new">Limits compared, differences flagged with sources</span><span class="src">M2 · M4 36%</span></div>
+      <div class="jstep cp"><span class="n">5 · CHECKPOINT 1</span><b>Assistant confirms the flag</b><span class="new">Confirm / acceptable variance / not a mismatch. Fax reads must be verified</span><span class="src">M2 "bite us later"</span></div>
+      <div class="jstep"><span class="n">6 · ASK</span><b>Precise broker request</b><span class="today">Back-and-forth email</span><span class="new">Exact field, both values, snippets attached</span><span class="src">M1</span></div>
+      <div class="jstep"><span class="n">7 · WAIT</span><b>Tracked, not lost</b><span class="today">Median 2.1 days, untracked</span><span class="new">Nudge at day 2, escalate at day 4</span><span class="src">M4 2.1d · 9 &gt; 4d</span></div>
+      <div class="jstep"><span class="n">8 · REPLY</span><b>Re-checked automatically</b><span class="today">Find reply, re-read all</span><span class="new">Attached and compared again</span><span class="src">M2</span></div>
+      <div class="jstep cp"><span class="n">9 · CHECKPOINT 2</span><b>Person binds</b><span class="new">Blocked until every flag and missing document is resolved</span><span class="src">Binding rule</span></div>
+    </div>
+    <div class="phase">
+      <span style="border-color:#c2410c;flex:2">Screen 1 · Submission</span>
+      <span style="border-color:var(--amber-line);flex:3">Screen 2 · Mismatch review</span>
+      <span style="border-color:#6366f1;flex:4">Screen 3 · Follow-ups &amp; bind</span>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 1 · WORKSPACE ================= -->
+<section class="screen" id="workspace">
+  <div class="crumb"><a href="#followups">Submissions</a> / SUB-2481</div>
+  <div class="head">
+    <div>
+      <h1>Harbor Point Logistics LLC <span class="chip" style="vertical-align:middle">General Liability</span></h1>
+      <p class="sub">Broker: Dana Whitfield, Kessler &amp; Lane · Requested effective 1 Nov 2026</p>
+    </div>
+    <div class="row" id="wsStatus"></div>
+  </div>
+
+  <div class="ws">
+    <div>
+      <div class="card-h"><h3>Documents</h3><span class="chip info">Collected from 3 channels</span></div>
+      <div class="doclist" id="doclist" data-ev>
+        <span class="ev-tag">N1 · Colin: "four different places… hunting through my inbox" (M2). Documents now come to the assistant.</span>
+      </div>
+    </div>
+
+    <div class="card preview" data-ev>
+      <span class="ev-tag">Every value links back to its source document, so the assistant can verify instead of retyping.</span>
+      <div class="card-h"><h2 id="pvTitle">Certificate of insurance</h2><span id="pvChip"></span></div>
+      <div class="paper" id="paper"></div>
+    </div>
+
+    <div class="card" data-ev>
+      <span class="ev-tag">N4 · "I know it cold" (M1), 3 min (M4). Same checklist, same order, now prefilled (Owen's autofill, as a by-product).</span>
+      <div class="card-h"><h2>Binding checklist</h2><span class="chip" id="ckCount"></span></div>
+      <div class="autofill-note">Prefilled from the documents. Same items and order as Bindwise.</div>
+      <div class="checklist" id="checklist"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= 2 · REVIEW ================= -->
+<section class="screen" id="review">
+  <div class="crumb"><a href="#workspace">SUB-2481 · Harbor Point Logistics</a> / Mismatch review</div>
+  <div class="head">
+    <div><h1>Coverage limit doesn't match</h1><p class="sub">Certificate of insurance vs. application · flagged automatically</p></div>
+    <span class="chip warn" id="rvState"><span class="dot"></span>Needs your decision</span>
+  </div>
+
+  <div class="gate" data-ev>
+    <span class="ev-tag">Checkpoint 1. Mismatches hit 36% of submissions (M4), and missing one "comes back to bite us" (M2). The broker email is external, so a false flag costs days.</span>
+    <span class="badge">CHECKPOINT 1</span>
+    <div><b>Nothing goes to the broker until you decide.</b> The system found and compared the values. You confirm what they mean.</div>
+  </div>
+
+  <div class="field-cmp" data-ev>
+    <span class="ev-tag">N2 · Side by side, with the source line highlighted, replaces "I just read carefully" (M2).</span>
+    <div class="lab">General liability · Each occurrence <span class="chip bad">Mismatch</span></div>
+    <div><div class="val-src" style="font-size:12px;color:var(--muted)">Application <span class="chip portal">Portal</span></div><div class="v">$2,000,000</div><div style="font-size:12px;color:var(--muted)">What the client requested · p.2, line 14</div></div>
+    <div style="border-left:1px solid var(--line)"><div style="font-size:12px;color:var(--muted)">Certificate of insurance <span class="chip email">Email · Dana W.</span></div><div class="v bad">$1,000,000</div><div style="font-size:12px;color:var(--muted)">Read with high confidence (clean PDF)</div></div>
+    <div class="match">✓ General aggregate matches: $4,000,000 on both · ✓ Insured name and dates match</div>
+  </div>
+
+  <div class="compare">
+    <div class="card"><h3>Application · p.2</h3><div class="paper" style="margin-top:10px;min-height:0">
+      <div class="ln"><span>Each occurrence</span><span class="hl">$2,000,000</span></div>
+      <div class="ln"><span>General aggregate</span><span>$4,000,000</span></div>
+      <div class="ln"><span>Products/comp. ops</span><span>$4,000,000</span></div></div></div>
+    <div class="card"><h3>Certificate (ACORD 25)</h3><div class="paper" style="margin-top:10px;min-height:0">
+      <div class="ln"><span>EACH OCCURRENCE</span><span class="hl">$1,000,000</span></div>
+      <div class="ln"><span>GENERAL AGGREGATE</span><span>$4,000,000</span></div>
+      <div class="ln"><span>PRODUCTS - COMP/OP AGG</span><span>$4,000,000</span></div></div></div>
+  </div>
+
+  <div class="verify" data-ev>
+    <span class="ev-tag">Fax scans are where automatic reading is weakest. Low-confidence values must be confirmed by a person before they count.</span>
+    <input type="checkbox" id="faxChk" style="margin-top:3px">
+    <label for="faxChk"><b>Also verify one low-confidence read:</b> Loss runs (fax scan) show <b>total incurred $48,200</b> over 5 years. <span class="chip fax">Fax · 71% confidence</span><br><span style="color:var(--muted);font-size:12px">I've compared this against the scan.</span></label>
+  </div>
+
+  <h2 style="margin:20px 0 8px">Your decision</h2>
+  <div class="decide" data-ev>
+    <span class="ev-tag">Three equal choices, none pre-selected, so approving is never the path of least resistance.</span>
+    <button class="opt" data-d="confirm"><b>Confirm mismatch</b><span>Ask the broker for a corrected certificate</span></button>
+    <button class="opt" data-d="accept"><b>Acceptable variance</b><span>Proceed with a logged reason</span></button>
+    <button class="opt" data-d="false"><b>Not a mismatch</b><span>The system misread. Correct the value</span></button>
+  </div>
+
+  <div class="panel hidden" id="pConfirm" data-ev>
+    <span class="ev-tag">N3 · Anika: "back and forth with a broker… days" (M1). One precise request with evidence attached, sent by a person.</span>
+    <label class="lbl" for="draft">Request to Dana Whitfield (Kessler &amp; Lane). Drafted for you, edit freely.</label>
+    <textarea id="draft"></textarea>
+    <div class="attach"><span class="chip">📎 Application p.2 (highlighted)</span><span class="chip">📎 Certificate excerpt (highlighted)</span><span class="chip" id="attMissing">📎 Missing: Signed TRIA disclosure</span></div>
+    <div class="row" style="margin-top:12px"><span style="color:var(--muted);font-size:12px">Tracked on the follow-up board. Auto-nudge at day 2.</span><span class="spacer"></span><button class="btn primary" id="sendBtn" disabled>Send to broker</button></div>
+  </div>
+  <div class="panel hidden" id="pAccept">
+    <label class="lbl" for="reason">Why is this acceptable?</label>
+    <select id="reason"><option value="">Choose a reason…</option><option>Client approved the lower limit in writing</option><option>Umbrella policy covers the difference</option><option>Other (explain below)</option></select>
+    <input type="text" placeholder="Note (required for Other)" style="margin-top:8px">
+    <div class="row" style="margin-top:12px"><span class="spacer"></span><button class="btn dark" id="acceptBtn" disabled>Record and continue</button></div>
+  </div>
+  <div class="panel hidden" id="pFalse">
+    <label class="lbl" for="corr">Correct value on the certificate</label>
+    <input type="text" id="corr" value="$2,000,000">
+    <div class="row" style="margin-top:12px"><span style="color:var(--muted);font-size:12px">The correction is logged and used to improve future reads.</span><span class="spacer"></span><button class="btn dark" id="falseBtn" disabled>Save correction</button></div>
+  </div>
+  <p id="faxHint" class="hidden" style="color:var(--amber);font-size:13px;margin-top:8px">Verify the fax read above before continuing.</p>
+</section>
+
+<!-- ================= 3 · FOLLOW-UPS & BIND ================= -->
+<section class="screen" id="followups">
+  <div class="head">
+    <div><h1>Waiting on brokers</h1><p class="sub">Every open request in one place, so nothing sits silently in an inbox.</p></div>
+    <div class="row"><span class="chip bad">1 over 4 days</span><span class="chip warn">1 nudged</span></div>
+  </div>
+
+  <div class="fu">
+    <div class="card table-wrap" data-ev>
+      <span class="ev-tag">N3 · Median 2.1 days, 9 submissions over 4 days (M4). Oldest first; nudge at day 2, escalate at day 4. Thresholds to confirm in the next round (Q1).</span>
+      <table>
+        <thead><tr><th>Submission</th><th>Waiting on</th><th>Days</th><th>Status</th><th></th></tr></thead>
+        <tbody id="fuRows"></tbody>
+      </table>
+    </div>
+
+    <div class="card" id="bindCard" data-ev>
+      <span class="ev-tag">Checkpoint 2. Binding is final, so a named person binds. It's blocked while any mismatch or missing document is open.</span>
+      <div id="bindBody"></div>
+    </div>
+  </div>
+</section>
+
+</main>
+<div class="foot">Concept prototype for an <a href="https://ajaia.ai" target="_blank" rel="noopener">Ajaia</a> discovery engagement · Nachiket Pophali · All names and figures except the M4 metrics are illustrative. Press <b>E</b> to show the evidence layer.</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+
+// ---------------- state ----------------
+const S = {
+  mismatch: 'open',      // open | sent | accepted | corrected | resolved
+  tria: 'missing',       // missing | requested | received
+  faxVerified: false,
+  decision: null,
+  bound: false,
+  doc: 'cert',
+  log: []
+};
+const now = () => new Date().toLocaleTimeString([], {hour:'numeric', minute:'2-digit'});
+const addLog = t => S.log.push(`${now()} · ${t}`);
+function toast(t){ const el=$('#toast'); el.textContent=t; el.classList.add('on'); clearTimeout(toast.t); toast.t=setTimeout(()=>el.classList.remove('on'),2600); }
+
+// ---------------- documents ----------------
+const docs = [
+  {id:'app',  name:'Application (ACORD 125/126)', src:'portal', meta:'Client portal · 9 Oct', ic:'PDF'},
+  {id:'cert', name:'Certificate of insurance',    src:'email',  meta:'Email from Dana W. · 13 Oct', ic:'PDF'},
+  {id:'loss', name:'Loss runs, 5 years',          src:'fax',    meta:'Fax scan · 12 Oct · 71% read confidence', ic:'FAX'},
+  {id:'lim',  name:'Coverage limits page',        src:'portal', meta:'Client portal · 9 Oct', ic:'PDF'},
+  {id:'tria', name:'Signed TRIA disclosure',      src:null,     meta:'Not received on any channel', ic:'—'},
+];
+const srcChip = s => s ? `<span class="chip ${s}">${{portal:'Portal',email:'Email',fax:'Fax'}[s]}</span>` : '';
+const papers = {
+  app:  {t:'Application (ACORD 125/126)', faxed:false, body:`<h4>Commercial Insurance Application</h4>
+        <div class="ln"><span>Applicant</span><span>Harbor Point Logistics LLC</span></div>
+        <div class="ln"><span>Effective date</span><span>11/01/2026</span></div>
+        <div class="ln"><span>Each occurrence (requested)</span><span class="hl">$2,000,000</span></div>
+        <div class="ln"><span>General aggregate</span><span>$4,000,000</span></div>
+        <div class="ln"><span>Products/comp. ops</span><span>$4,000,000</span></div>`},
+  cert: {t:'Certificate of insurance', faxed:false, body:`<h4>ACORD 25 · Certificate of Liability Insurance</h4>
+        <div class="ln"><span>INSURED</span><span>Harbor Point Logistics LLC</span></div>
+        <div class="ln"><span>POLICY EFF / EXP</span><span>11/01/2026 – 11/01/2027</span></div>
+        <div class="ln"><span>EACH OCCURRENCE</span><span class="hl">$1,000,000</span></div>
+        <div class="ln"><span>GENERAL AGGREGATE</span><span>$4,000,000</span></div>
+        <div class="ln"><span>PRODUCTS - COMP/OP AGG</span><span>$4,000,000</span></div>`},
+  loss: {t:'Loss runs, 5 years', faxed:true, body:`<h4>LOSS HISTORY · 2021–2026 (fax)</h4>
+        <div class="ln"><span>Claims reported</span><span>3</span></div>
+        <div class="ln"><span>Total paid</span><span>$41,900</span></div>
+        <div class="ln"><span>Total incurred</span><span class="hl">$48,2OO ?</span></div>
+        <div class="ln"><span>Open claims</span><span>0</span></div>`},
+  lim:  {t:'Coverage limits page', faxed:false, body:`<h4>Schedule of Limits</h4>
+        <div class="ln"><span>Each occurrence</span><span>$2,000,000</span></div>
+        <div class="ln"><span>General aggregate</span><span>$4,000,000</span></div>
+        <div class="ln"><span>Damage to rented premises</span><span>$100,000</span></div>`},
+};
+function renderDocs(){
+  const tag = $('#doclist .ev-tag').outerHTML;
+  $('#doclist').innerHTML = tag + docs.map(d=>{
+    const missing = d.id==='tria' && S.tria!=='received';
+    if(missing){
+      return `<div class="doc missing"><div class="ic">!</div><div style="flex:1"><b>${d.name}</b><div class="meta">${S.tria==='requested'?'Requested from broker':d.meta}</div>
+        ${S.tria==='missing'?'<button class="btn sm" style="margin-top:6px" onclick="requestTria(event)">Add to broker request</button>':'<span class="chip info" style="margin-top:6px">Requested</span>'}</div></div>`;
+    }
+    const src = d.id==='tria' ? 'email' : d.src;
+    const meta = d.id==='tria' ? 'Email from Dana W. · reply' : d.meta;
+    return `<button class="doc ${S.doc===d.id?'on':''}" data-doc="${d.id}"><div class="ic">${d.ic==='—'?'PDF':d.ic}</div><div style="flex:1"><b>${d.name}</b><div class="meta">${meta}</div><div style="margin-top:4px">${srcChip(src)}</div></div></button>`;
+  }).join('');
+  $$('#doclist [data-doc]').forEach(b=>b.onclick=()=>{S.doc=b.dataset.doc; renderDocs(); renderPaper();});
+}
+function renderPaper(){
+  const p = papers[S.doc] || {t:'Signed TRIA disclosure', faxed:false, body:'<h4>Terrorism Risk Insurance Act Disclosure</h4><div class="ln"><span>Coverage</span><span>Accepted</span></div><div class="ln"><span>Signed</span><span>Harbor Point Logistics LLC</span></div>'};
+  $('#pvTitle').textContent = p.t;
+  const d = docs.find(x=>x.id===S.doc);
+  $('#pvChip').innerHTML = srcChip(S.doc==='tria'?'email':d.src);
+  $('#paper').className = 'paper' + (p.faxed?' faxed':'');
+  $('#paper').innerHTML = p.body;
+}
+window.requestTria = e => { e.stopPropagation(); S.tria='requested'; addLog('Missing TRIA disclosure added to broker request'); toast('Added to the broker request'); renderAll(); };
+
+// ---------------- checklist ----------------
+function checklistItems(){
+  const lim = {
+    open:     ['flag','Each occurrence: $2M requested, $1M on cert','<a href="#review">Review mismatch →</a>'],
+    sent:     ['wait','Waiting on corrected certificate','<a href="#followups">Track →</a>'],
+    accepted: ['done','Variance accepted · reason logged',''],
+    corrected:['done','Matches after correction · $2M',''],
+    resolved: ['done','Matches: $2M on both (corrected cert)',''],
+  }[S.mismatch];
+  const tria = S.tria==='received' ? ['done','Received from broker',''] : S.tria==='requested' ? ['wait','Requested from broker',''] : ['miss','Missing on all channels',''];
+  return [
+    ['done','Named insured matches','Harbor Point Logistics LLC · <a href="#" data-src="app">source</a>'],
+    ['done','Effective dates match','11/01/2026 – 11/01/2027 · <a href="#" data-src="cert">source</a>'],
+    ['done','Application signed','Signed 9 Oct · <a href="#" data-src="app">source</a>'],
+    [S.faxVerified?'done':'flag','Loss runs, 5 years', S.faxVerified?'Verified by assistant':'Fax read, needs verification · <a href="#review">verify</a>'],
+    [lim[0],'Coverage limits match application', lim[1]+(lim[2]?' · '+lim[2]:'')],
+    ['done','General aggregate matches','$4,000,000 · <a href="#" data-src="cert">source</a>'],
+    [tria[0],'Signed TRIA disclosure', tria[1]],
+  ];
+}
+function renderChecklist(){
+  const items = checklistItems();
+  const sym = {done:'✓',flag:'!',miss:'×',wait:'…'};
+  $('#checklist').innerHTML = items.map(([st,label,val])=>`<div class="ci ${st}"><span class="tick">${sym[st]}</span><div><div>${label}</div><div class="val">${val}</div></div></div>`).join('');
+  const done = items.filter(i=>i[0]==='done').length;
+  $('#ckCount').textContent = `${done} of ${items.length} clear`;
+  $('#ckCount').className = 'chip ' + (done===items.length?'ok':'warn');
+  $$('#checklist [data-src]').forEach(a=>a.onclick=e=>{e.preventDefault(); S.doc=a.dataset.src; renderDocs(); renderPaper();});
+  // header status
+  const blockers = bindBlockers();
+  $('#wsStatus').innerHTML = S.bound ? '<span class="chip ok"><span class="dot"></span>Bound</span>'
+    : blockers.length ? `<span class="chip warn"><span class="dot"></span>${blockers.length} item${blockers.length>1?'s':''} before binding</span>${S.mismatch==='open'?'<a class="btn primary sm" href="#review">Review mismatch →</a>':''}`
+    : '<span class="chip ok"><span class="dot"></span>Ready to bind</span><a class="btn primary sm" href="#followups">Go to bind →</a>';
+}
+function bindBlockers(){
+  const b=[];
+  if(['open','sent'].includes(S.mismatch)) b.push(S.mismatch==='open'?'Coverage-limit mismatch not reviewed':'Waiting on corrected certificate');
+  if(!S.faxVerified) b.push('Fax loss-run figure not verified');
+  if(S.tria!=='received') b.push(S.tria==='requested'?'Waiting on signed TRIA disclosure':'Signed TRIA disclosure missing');
+  return b;
+}
+
+// ---------------- review / checkpoint 1 ----------------
+function draftText(){
+  const tria = S.tria!=='missing';
+  return `Hi Dana,
+
+For Harbor Point Logistics LLC (GL, effective 11/01/2026), the certificate shows an each-occurrence limit of $1,000,000, but the application requests $2,000,000. Both excerpts are attached with the lines highlighted.
+
+Could you send a corrected certificate at $2,000,000, or confirm in writing that the client accepts $1,000,000?${tria?`
+
+We're also still missing the signed TRIA disclosure.`:''}
+
+We're aiming to bind before 11/01. Thanks,
+Anika Shah, Marsh & Colby`;
+}
+function syncDecision(){
+  $$('.opt').forEach(o=>o.classList.toggle('on', o.dataset.d===S.decision));
+  $('#pConfirm').classList.toggle('hidden', S.decision!=='confirm');
+  $('#pAccept').classList.toggle('hidden', S.decision!=='accept');
+  $('#pFalse').classList.toggle('hidden', S.decision!=='false');
+  const ok = S.faxVerified;
+  $('#sendBtn').disabled = !ok;
+  $('#acceptBtn').disabled = !ok || !$('#reason').value;
+  $('#falseBtn').disabled = !ok;
+  $('#faxHint').classList.toggle('hidden', ok || !S.decision);
+  $('#attMissing').classList.toggle('hidden', S.tria==='missing');
+}
+$$('.opt').forEach(o=>o.onclick=()=>{
+  if(S.mismatch!=='open') return toast('Already decided. See the follow-up board.');
+  S.decision=o.dataset.d;
+  if(S.decision==='confirm') $('#draft').value = draftText();
+  syncDecision();
+});
+$('#faxChk').onchange = e=>{ S.faxVerified=e.target.checked; if(S.faxVerified) addLog('Assistant verified fax loss-run figure ($48,200)'); syncDecision(); renderChecklist(); };
+$('#reason').onchange = syncDecision;
+$('#sendBtn').onclick = ()=>{ S.mismatch='sent'; if(S.tria==='missing') S.tria='requested'; addLog('Assistant confirmed mismatch; request sent to Dana Whitfield'); toast('Sent to Dana. Tracking on the follow-up board.'); lockReview(); location.hash='followups'; };
+$('#acceptBtn').onclick = ()=>{ S.mismatch='accepted'; addLog(`Variance accepted: "${$('#reason').value}"`); toast('Variance recorded with reason'); lockReview(); location.hash='workspace'; };
+$('#falseBtn').onclick = ()=>{ S.mismatch='corrected'; addLog(`Misread corrected to ${$('#corr').value}`); toast('Correction saved'); lockReview(); location.hash='workspace'; };
+function lockReview(){
+  $('#rvState').className='chip ok'; $('#rvState').innerHTML='<span class="dot"></span>Decided · '+{sent:'sent to broker',accepted:'variance accepted',corrected:'corrected'}[S.mismatch];
+  renderAll();
+}
+
+// ---------------- follow-ups & bind / checkpoint 2 ----------------
+const others = [
+  {id:'SUB-2466', name:'Ridgeline Dental Group', what:'Loss runs, 5 years', days:4.6, status:'Escalated to broker manager', cls:'bad'},
+  {id:'SUB-2470', name:'Osei Family Farms',      what:'Corrected umbrella limit', days:2.3, status:'Auto-nudged today', cls:'warn'},
+  {id:'SUB-2477', name:'Brightwater Café Co.',   what:'Signed application', days:0.8, status:'Waiting', cls:''},
+];
+let selected = 'SUB-2481';
+function renderFollowups(){
+  const mine = {id:'SUB-2481', name:'Harbor Point Logistics', what: S.mismatch==='sent' ? 'Corrected certificate'+(S.tria==='requested'?' + TRIA':'') : (S.tria==='requested'?'Signed TRIA disclosure':'—'),
+    days: S.mismatch==='resolved' || S.tria==='received' ? null : 0.0, status: S.bound?'Bound':(bindBlockers().length? (S.mismatch==='open'?'Needs review':'Sent just now') : 'Reply in · ready to bind'), cls: S.bound?'ok':(bindBlockers().length?'info':'ok')};
+  const rows = [...others, mine].sort((a,b)=>(b.days??-1)-(a.days??-1));
+  $('#fuRows').innerHTML = rows.map(r=>{
+    const d = r.days==null ? '—' : r.days.toFixed(1);
+    const dc = r.days>=4?'late':r.days>=2?'mid':'';
+    const pct = r.days==null?0:Math.min(100,r.days/5*100);
+    const col = r.days>=4?'var(--red)':r.days>=2?'var(--amber-line)':'#6366f1';
+    return `<tr data-id="${r.id}" class="${selected===r.id?'on':''}"><td><b>${r.name}</b><div style="font-size:12px;color:var(--muted)">${r.id}</div></td><td>${r.what}</td>
+      <td><span class="days ${dc}">${d}</span><div class="bar"><i style="width:${pct}%;background:${col}"></i></div></td><td><span class="chip ${r.cls}">${r.status}</span></td>
+      <td>${r.id==='SUB-2481'?'':'<button class="btn sm" onclick="event.stopPropagation();toast(\'Nudge sent\')">'+(r.days>=4?'Call broker':'Nudge')+'</button>'}</td></tr>`;
+  }).join('');
+  $$('#fuRows tr').forEach(tr=>tr.onclick=()=>{selected=tr.dataset.id; renderFollowups(); renderBind();});
+}
+function renderBind(){
+  if(selected!=='SUB-2481'){
+    const o = others.find(x=>x.id===selected);
+    $('#bindBody').innerHTML = `<h3>${o.id}</h3><h2 style="margin:4px 0 10px">${o.name}</h2><p style="color:var(--muted)">Waiting on: <b style="color:var(--ink)">${o.what}</b> · ${o.days.toFixed(1)} days</p><p style="color:var(--muted)">Binding opens once the reply arrives and passes the automatic re-check.</p><button class="btn sm" onclick="selected='SUB-2481';renderFollowups();renderBind()">← Back to Harbor Point</button>`;
+    return;
+  }
+  if(S.bound){
+    $('#bindBody').innerHTML = `<div class="bound"><div class="big">✓</div><h2>Policy bound</h2><p style="color:var(--muted)">Harbor Point Logistics LLC · GL · effective 11/01/2026</p></div><div class="audit"><b>Audit trail</b>${S.log.map(l=>`<div>${l}</div>`).join('')}</div>`;
+    return;
+  }
+  const b = bindBlockers();
+  const waiting = S.mismatch==='sent' || S.tria==='requested';
+  const items = checklistItems();
+  $('#bindBody').innerHTML = `
+    <div class="card-h"><div><h3>Checkpoint 2 · Bind</h3><h2 style="margin-top:4px">Harbor Point Logistics LLC</h2></div><span class="chip ${b.length?'warn':'ok'}">${b.length?b.length+' blocking':'All clear'}</span></div>
+    <ul class="sumlist">${items.map(([st,l,v])=>`<li><span class="${st==='done'?'ok-ic':'bad-ic'}">${st==='done'?'✓':'•'}</span><div style="flex:1">${l}<div style="font-size:12px;color:var(--muted)">${v.replace(/<[^>]+>/g,'')}</div></div></li>`).join('')}</ul>
+    ${waiting?`<div class="panel" style="background:var(--fill);border-style:dashed"><div class="row"><span style="font-size:13px">Prototype only: skip ahead to the broker's reply.</span><span class="spacer"></span><button class="btn sm" id="simReply">Simulate broker reply</button></div></div>`:''}
+    ${b.length?`<p style="color:var(--amber);font-size:13px;margin:12px 0 0">Binding is blocked until: ${b.join('; ')}.</p>`:''}
+    <label class="row" style="margin-top:14px;align-items:flex-start"><input type="checkbox" id="bindChk" ${b.length?'disabled':''} style="margin-top:3px"><span>I've reviewed every item and resolved flag above.</span></label>
+    <div class="row" style="margin-top:12px"><span style="font-size:12px;color:var(--muted)">Binding activates the policy. Logged as Anika Shah.</span><span class="spacer"></span><button class="btn primary" id="bindBtn" disabled>Bind policy</button></div>
+    ${S.log.length?`<div class="audit"><b>Decisions so far</b>${S.log.map(l=>`<div>${l}</div>`).join('')}</div>`:''}`;
+  const sim = $('#simReply');
+  if(sim) sim.onclick = ()=>{
+    if(S.mismatch==='sent'){ S.mismatch='resolved'; addLog('Corrected certificate received by email and re-checked automatically: $2M matches'); }
+    if(S.tria==='requested'){ S.tria='received'; addLog('Signed TRIA disclosure received'); }
+    toast('Reply attached and re-checked automatically');
+    renderAll();
+  };
+  const chk = $('#bindChk'); if(chk) chk.onchange = ()=> $('#bindBtn').disabled = !chk.checked;
+  $('#bindBtn').onclick = ()=>{ S.bound=true; addLog('Policy bound by Anika Shah'); toast('Policy bound'); renderAll(); };
+}
+
+// ---------------- routing & evidence ----------------
+function renderAll(){ renderDocs(); renderPaper(); renderChecklist(); syncDecision(); renderFollowups(); renderBind(); }
+function route(){
+  const id = (location.hash||'#journey').slice(1);
+  const ok = ['journey','workspace','review','followups'].includes(id) ? id : 'journey';
+  $$('.screen').forEach(s=>s.classList.toggle('on', s.id===ok));
+  $$('#tabs a').forEach(a=>a.classList.toggle('on', a.getAttribute('href')==='#'+ok));
+  if(ok==='followups') selected = selected || 'SUB-2481';
+  window.scrollTo(0,0);
+}
+function toggleEv(){ const on=document.body.classList.toggle('evidence'); $('#evBtn').setAttribute('aria-pressed',on); $('#evBtn').textContent = on?'◉ Hide evidence':'◎ Show evidence'; }
+$('#evBtn').onclick = toggleEv;
+addEventListener('keydown', e=>{ if(e.key.toLowerCase()==='e' && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) toggleEv(); });
+addEventListener('hashchange', route);
+renderAll(); route();
+</script>
+</body>
+</html>
